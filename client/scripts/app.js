@@ -1,108 +1,135 @@
+$(document).on('ready', function () {
 
-// Server:
-// https://api.parse.com/1/classes/chatterbox
+  // Server:
+  // https://api.parse.com/1/classes/chatterbox
 
-// var mostRecentMessage = 0;  //time in millis
-var mostRecentMessage;
-// Display messages retrieved from the parse server
+  // var mostRecentMessage = 0;  //time in millis
+  var mostRecentMessage;
+  // Display messages retrieved from the parse server
 
-var appendMessage = function(username, message) {
-  var bad = function() {
+  var appendMessage = function(username, message) {
+    var bad = function() {
 
-    return  !username || !message || !!username.match(/[^\w\s]/) || !!message.match(/[^\w\s]/);
-  };
+      return  !username || !message || !!username.match(/[^\w\s]/) || !!message.match(/[^\w\s]/);
+    };
 
-  if(bad()) {
-    return;
+    if(bad()) {
+      return;
+    }
+    var node = $('<div></div>');
+    node.text(username + ' : ' + message);
+    $('#main').append(node);
   }
-  var node = $('<div></div>');
-  node.text(username + ' : ' + message);
-  $('#main').append(node);
-}
 
-// make ajax call
-var refreshMessages = function(timestamp) {
-  console.log('refreshed');
-  $.ajax({
-    url:"https://api.parse.com/1/classes/chatterbox",
-    type:'GET',
-    data: {
-      "where": {
-        "createdAt": {
-          "$gt" : mostRecentMessage
+  // make ajax call
+  var refreshMessages = function(timestamp) {
+    console.log('refreshed');
+    $.ajax({
+      url:"https://api.parse.com/1/classes/chatterbox",
+      type:'GET',
+      data: {
+        "where": {
+          "createdAt": {
+            "$gt" : mostRecentMessage
+          }
+        }
+      },
+      contentType: 'application/json',
+      success:function(data) {
+
+        console.log(data);
+        var results = data.results;
+
+        // return messages
+        // display messages
+        for(var i=0; i < results.length; i++) {
+          appendMessage(results[i].username, results[i].text);
+          // store last timestamp
+          // query by timestamp
+        }
+        //mostRecentMessage = new Date(results[results.length-1].createdAt).getTime();
+        if(results.length > 0) {
+          mostRecentMessage = results[results.length-1].createdAt;
         }
       }
-    },
-    contentType: 'application/json',
-    success:function(data) {
-      debugger
-      console.log(data);
-      var results = data.results;
+    });
+  }
 
-      // return messages
-      // display messages
-      for(var i=0; i < results.length; i++) {
-        appendMessage(results[i].username, results[i].text);
-        // store last timestamp
-        // query by timestamp
+  refreshMessages();
+
+  // Setup a way to refresh the displayed messages (either automatically or with a button)
+
+  // setInterval call
+  setInterval(refreshMessages, 1000);
+    // re-call messages endpoint
+    // update page with messages
+
+  // Allow users to select a username
+  $(".submit").on("click", function() {
+    // debugger
+
+    var message = {
+      'username': $(".name").val(),
+      'text': $(".message").val(),
+      'roomname': '4chan'
+    };
+
+    debugger
+
+    $.ajax({
+      // always use this url
+      url: 'https://api.parse.com/1/classes/chatterbox',
+      type: 'POST',
+      data: JSON.stringify(message),
+      contentType: 'application/json',
+      success: function (data) {
+        console.log('chatterbox: Message sent');
+      },
+      error: function (data) {
+        // see: https://developer.mozilla.org/en-US/docs/Web/API/console.error
+        console.error('chatterbox: Failed to send message');
       }
-      //mostRecentMessage = new Date(results[results.length-1].createdAt).getTime();
-      if(results.length > 0) {
-        mostRecentMessage = results[results.length-1].createdAt;
-      }
-    }
+    });
   });
-}
 
-refreshMessages();
-
-// Setup a way to refresh the displayed messages (either automatically or with a button)
-
-// setInterval call
-setInterval(refreshMessages, 1000);
-  // re-call messages endpoint
-  // update page with messages
+  // make user object
+    // name : set name from input
+    // validate no XSS
 
 
-// Allow users to select a username
+  // Allow users to send messages
 
-// make user object
-  // name : set name from input
-  // validate no XSS
-
-
-// Allow users to send messages
-
-// if the user name is not set
-  // throw error
-// else
-  // validate message for XSS
-  // if valid
-    // make POST call to parse
+  // if the user name is not set
+    // throw error
   // else
-    // throw an error
+    // validate message for XSS
+    // if valid
+      // make POST call to parse
+    // else
+      // throw an error
 
 
 
-/////////////////// NOTE
-// Be careful to use proper escaping on any user input.
-// Since you're displaying input that other users have typed, your app is vulnerable XSS attacks.
-// Note: If you issue an XSS attack, make it innocuous enough to be educational, rather than disruptive.
+  /////////////////// NOTE
+  // Be careful to use proper escaping on any user input.
+  // Since you're displaying input that other users have typed, your app is vulnerable XSS attacks.
+  // Note: If you issue an XSS attack, make it innocuous enough to be educational, rather than disruptive.
 
 
 
-////////////////////// Rooms ////////////////////////////
+  ////////////////////// Rooms ////////////////////////////
 
-// Allow users to create rooms and enter existing rooms
-// //(rooms are defined by the message.room property of messages, so you'll need to filter them somehow)
-
-
+  // Allow users to create rooms and enter existing rooms
+  // //(rooms are defined by the message.room property of messages, so you'll need to filter them somehow)
 
 
 
 
-/////////////////// Socializing  ////////////////////////////
 
-// Allow users to 'befriend' other users by clicking on their username
-// Display all messages sent by friends in bold
 
+  /////////////////// Socializing  ////////////////////////////
+
+  // Allow users to 'befriend' other users by clicking on their username
+  // Display all messages sent by friends in bold
+
+});  // end on ready
