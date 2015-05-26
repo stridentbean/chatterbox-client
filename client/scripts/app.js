@@ -1,3 +1,4 @@
+
 var isInvalid = function (username, message) {
     return  !username || !message || !!username.match(/[^\w\s]/) || !!message.match(/[^\w\s]/);
 }
@@ -7,17 +8,20 @@ var app = {
   server: 'https://api.parse.com/1/classes/chatterbox',
   init: function() {
     // assign event handlers to submit message
-    $(".submit").on("click", function() {
-      debugger
-      app.handleSubmit();
-    });
-    $("#chats").on("click", ".username", function() {
-      app.addFriend(this);
-    });
+    $(document).on('ready', function () {
 
-    // fetch messages, and re-fetch every 1 second
-    app.fetch();
-    // setInterval(app.fetch, 1000);
+      $(".submit").on("click", function() {
+        app.handleSubmit();
+      });
+
+      $("#chats").on("click", ".username", function() {
+        app.addFriend(this);
+      });
+
+      // fetch messages, and re-fetch every 1 second
+      app.fetch();
+      setInterval(app.fetch, 1000);
+    });
   }, // end init function //
   send: function (message) {
       var valid = !isInvalid(message.username, message.text);
@@ -31,6 +35,7 @@ var app = {
           success: function (data) {
             console.log('chatterbox: Message sent');
             $(".message").val("");
+            $(".message").focus();
           },
           error: function (data) {
             // see: https://developer.mozilla.org/en-US/docs/Web/API/console.error
@@ -55,7 +60,6 @@ var app = {
         },
         contentType: 'application/json',
         success:function(data) {
-
           console.log(data);
           var results = data.results;
           for(var i=results.length-1; i > -1; i--) {
@@ -94,7 +98,6 @@ var app = {
       })
     },
     handleSubmit: function() {
-      debugger
       var message = {
         'username': $(".name").val(),
         'text': $(".message").val(),
