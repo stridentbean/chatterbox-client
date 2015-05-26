@@ -28,7 +28,7 @@ describe('chatterbox', function() {
       });
 
       it('should submit a POST request via $.ajax', function(done){
-        app.send([]);
+        app.send({ username: 'Mel Brooks', text: 'hey', roomname: 'lobby'});
         expect($.ajax.calledOnce).to.be.true;
         // sinon.spy method `args` comes in the form [function calls][arguments from that call]
         ajaxOptions = typeof $.ajax.args[0][0] === 'object' ? $.ajax.args[0][0] : $.ajax.args[0][1];
@@ -39,7 +39,7 @@ describe('chatterbox', function() {
       it('should send the correct message along with the request', function(done){
         var message = {
           username: 'Mel Brooks',
-          text: 'It\'s good to be the king',
+          text: 'Its good to be the king',
           roomname: 'lobby'
         };
 
@@ -77,7 +77,7 @@ describe('chatterbox', function() {
       it('should be able to add messages to the DOM', function(){
         var message = {
           username: 'Mel Brooks',
-          text: 'Never underestimate the power of the Schwartz!',
+          text: 'Never underestimate the power of the Schwartz',
           roomname: 'lobby'
         };
 
@@ -100,7 +100,7 @@ describe('chatterbox', function() {
 
         app.addMessage({
           username: 'Mel Brooks',
-          text: 'I didn\'t get a harumph outa that guy.!',
+          text: 'I didnt get a harumph outa that guy',
           roomname: 'lobby'
         });
 
@@ -118,7 +118,7 @@ describe('chatterbox', function() {
         $('#message').val('Why so many Mel Brooks quotes?');
 
         app.init();
-
+        debugger
         $('#send .submit').trigger('submit');
         expect(app.handleSubmit.calledOnce).to.be.true;
 

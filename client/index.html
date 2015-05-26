@@ -13,13 +13,18 @@
     <script src="scripts/app.js"></script>
   </head>
   <body>
-    <div class="userinput">
+    <h1>chatterbox</h1>
+    <div id="send">
       <input class="name" placeholder="name" />
-      <input class="message" placeholder="message" />
-      <button class="submit">Submit</button>
+      <input id="message" class="message" placeholder="message" />
+      <input class="submit" value="Submit" type="submit">
     </div>
+    <ul id="roomSelect">
+      <li>Rooms</li>
+    </ul>
     <div id="main">
-      <h1>chatterbox</h1>
+      <div id="chats">
+      </div>
     </div>
   </body>
 </html>

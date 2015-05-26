@@ -1,135 +1,151 @@
-$(document).on('ready', function () {
+var isInvalid = function (username, message) {
+    return  !username || !message || !!username.match(/[^\w\s]/) || !!message.match(/[^\w\s]/);
+}
+var mostRecentMessage;
 
-  // Server:
-  // https://api.parse.com/1/classes/chatterbox
+var app = {
+  server: 'https://api.parse.com/1/classes/chatterbox',
+  init: function() {
+    // assign event handlers to submit message
+    $(".submit").on("click", function() {
+      debugger
+      app.handleSubmit();
+    });
+    $("#chats").on("click", ".username", function() {
+      app.addFriend(this);
+    });
 
-  // var mostRecentMessage = 0;  //time in millis
-  var mostRecentMessage;
-  // Display messages retrieved from the parse server
+    // fetch messages, and re-fetch every 1 second
+    app.fetch();
+    // setInterval(app.fetch, 1000);
+  }, // end init function //
+  send: function (message) {
+      var valid = !isInvalid(message.username, message.text);
+      if(valid) {
+        $.ajax({
+          // always use this url
+          url: app.server,
+          type: 'POST',
+          data: JSON.stringify(message),
+          contentType: 'application/json',
+          success: function (data) {
+            console.log('chatterbox: Message sent');
+            $(".message").val("");
+          },
+          error: function (data) {
+            // see: https://developer.mozilla.org/en-US/docs/Web/API/console.error
+            console.error('chatterbox: Failed to send message');
+          }
+        });
+      } else {
+        alert('BAD! DON\'T YOU BE BAD!');
+      }
+  }, // end send function //
+  fetch: function(timestamp) {
+      console.log('refreshed');
+      $.ajax({
+        url:"https://api.parse.com/1/classes/chatterbox",
+        type:'GET',
+        data: {
+          "where": {
+            "createdAt": {
+              "$gt" : mostRecentMessage
+            }
+          }
+        },
+        contentType: 'application/json',
+        success:function(data) {
 
-  var appendMessage = function(username, message) {
-    var bad = function() {
-
-      return  !username || !message || !!username.match(/[^\w\s]/) || !!message.match(/[^\w\s]/);
-    };
-
-    if(bad()) {
-      return;
-    }
-    var node = $('<div></div>');
-    node.text(username + ' : ' + message);
-    $('#main').append(node);
-  }
-
-  // make ajax call
-  var refreshMessages = function(timestamp) {
-    console.log('refreshed');
-    $.ajax({
-      url:"https://api.parse.com/1/classes/chatterbox",
-      type:'GET',
-      data: {
-        "where": {
-          "createdAt": {
-            "$gt" : mostRecentMessage
+          console.log(data);
+          var results = data.results;
+          for(var i=results.length-1; i > -1; i--) {
+            var message = {
+              username: results[i].username,
+              text: results[i].text
+            };
+            app.addMessage(message);
+          }
+          if(results.length > 0) {
+            mostRecentMessage = results[0].createdAt;
           }
         }
-      },
-      contentType: 'application/json',
-      success:function(data) {
-
-        console.log(data);
-        var results = data.results;
-
-        // return messages
-        // display messages
-        for(var i=0; i < results.length; i++) {
-          appendMessage(results[i].username, results[i].text);
-          // store last timestamp
-          // query by timestamp
-        }
-        //mostRecentMessage = new Date(results[results.length-1].createdAt).getTime();
-        if(results.length > 0) {
-          mostRecentMessage = results[results.length-1].createdAt;
-        }
+      });
+    }, // end fetch function //
+    clearMessages: function () {
+      $('#chats').children().remove();
+    },
+    addMessage: function(message) {
+      var valid = !isInvalid(message.username, message.text);
+      if(valid) {
+        var node = $('<div></div>');
+        node.html("<span class='username'>" + message.username + "</span>" + ' : ' + "<span class='message'>" + message.text + "</span>");
+        $('#chats').prepend(node);
+      } else {
+        console.log('BAD!: ' + message.username + ' ' + message.text);
       }
-    });
-  }
+    },
+    addRoom: function (lobbyName) {
+      var node = $("<li>" + lobbyName + "</li>");
+      $('#roomSelect').append(node);
+    },
+    addFriend: function(node) {
+      $(node).css({
+        "font-weight":"bold"
+      })
+    },
+    handleSubmit: function() {
+      debugger
+      var message = {
+        'username': $(".name").val(),
+        'text': $(".message").val(),
+        'roomname': '4chan'
+      };
+      app.send(message);
+    }
 
-  refreshMessages();
+    // make user object
+      // name : set name from input
 
-  // Setup a way to refresh the displayed messages (either automatically or with a button)
-
-  // setInterval call
-  setInterval(refreshMessages, 1000);
-    // re-call messages endpoint
-    // update page with messages
-
-  // Allow users to select a username
-  $(".submit").on("click", function() {
-    // debugger
-
-    var message = {
-      'username': $(".name").val(),
-      'text': $(".message").val(),
-      'roomname': '4chan'
-    };
-
-    debugger
-
-    $.ajax({
-      // always use this url
-      url: 'https://api.parse.com/1/classes/chatterbox',
-      type: 'POST',
-      data: JSON.stringify(message),
-      contentType: 'application/json',
-      success: function (data) {
-        console.log('chatterbox: Message sent');
-      },
-      error: function (data) {
-        // see: https://developer.mozilla.org/en-US/docs/Web/API/console.error
-        console.error('chatterbox: Failed to send message');
-      }
-    });
-  });
-
-  // make user object
-    // name : set name from input
-    // validate no XSS
+      // validate no XSS
 
 
-  // Allow users to send messages
+    // Allow users to send messages
 
-  // if the user name is not set
-    // throw error
-  // else
-    // validate message for XSS
-    // if valid
-      // make POST call to parse
+    // if the user name is not set
+      // throw error
     // else
-      // throw an error
+      // validate message for XSS
+      // if valid
+        // make POST call to parse
+      // else
+        // throw an error
 
 
 
-  /////////////////// NOTE
-  // Be careful to use proper escaping on any user input.
-  // Since you're displaying input that other users have typed, your app is vulnerable XSS attacks.
-  // Note: If you issue an XSS attack, make it innocuous enough to be educational, rather than disruptive.
+    /////////////////// NOTE
+    // Be careful to use proper escaping on any user input.
+    // Since you're displaying input that other users have typed, your app is vulnerable XSS attacks.
+    // Note: If you issue an XSS attack, make it innocuous enough to be educational, rather than disruptive.
 
 
 
-  ////////////////////// Rooms ////////////////////////////
+    ////////////////////// Rooms ////////////////////////////
 
-  // Allow users to create rooms and enter existing rooms
-  // //(rooms are defined by the message.room property of messages, so you'll need to filter them somehow)
-
-
+    // Allow users to create rooms and enter existing rooms
+    // //(rooms are defined by the message.room property of messages, so you'll need to filter them somehow)
 
 
 
 
-  /////////////////// Socializing  ////////////////////////////
 
-  // Allow users to 'befriend' other users by clicking on their username
-  // Display all messages sent by friends in bold
 
-});  // end on ready
+    /////////////////// Socializing  ////////////////////////////
+
+    // Allow users to 'befriend' other users by clicking on their username
+    // Display all messages sent by friends in bold
+
+}  // end app
+
+app.init();
+
+
