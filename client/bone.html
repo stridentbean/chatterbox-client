@@ -24,5 +24,17 @@
       <div id="chats">
       </div>
     </div>
+    <script>
+      $(function(){
+        // Backbone-based app initialization
+        var messages = new Messages();
+        messages.loadMsgs();
+        var formView = new FormView({el: $('#main'), collection: messages})
+        var messagesView = new MessagesView({el: $('#chats'), collection: messages});
+        setInterval( messages.loadMsgs.bind(messages), 1000 );
+        // jQuery-based app initialization
+        //app.init();
+      });
+    </script>
   </body>
 </html>

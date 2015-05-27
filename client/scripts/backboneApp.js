@@ -1,67 +1,95 @@
-var isInvalid = function (username, message) {
-    return  !username || !message || !!username.match(/[^\w\s]/) || !!message.match(/[^\w\s]/);
-}
-
 var Message = Backbone.Model.extend({
-  initialize: function(username, message) {
-    this.set({
-      username: username,
-      message: message
-    });
+  url: 'https://api.parse.com/1/classes/chatterbox/',
+  defaults: {
+    username: 'No Name',
+    text: "No Message"
   }
 });
-
-var MessageView = Backbone.View.extend({
-  initialize: function () {
-    this.model.on('change', this.render, this);
-  },
-  render: function () {
-    var template = [
-      "<span class='username'>",
-        this.model.get('username'),
-      "</span> : <span class='message'>",
-        this.model.get('message'),
-      "</span>"
-    ].join('');
-    return this.$el.html(template);
-  }
-})
-
-var m = new Message('hello', 'world');
-var v = new MessageView({ model: m});
-m.set('message', 'foofoo');
-
 
 var Messages = Backbone.Collection.extend({
   url: 'https://api.parse.com/1/classes/chatterbox',
   parse: function (data) {
     console.log(data);
-    var results = data.results;
-    results.forEach(function (message, index) {
-      if(isInvalid(message.username, message.text)) {
-        return;
-      }
-      
-      var m = new Message(message.username, message.text);
-      var v = new MessageView({ model: m });
-      $('#chats').prepend(v.render());
-
-      if(index === results.length-1) {
-        lastMessageReceived = message.createdAt;
-
+    var results = [];
+    for(var i = data.results.length-1; i > -1; i-- ) {
+      results.push(data.results[i]);
+    }
+    return results;
+  },
+  model: Message,
+  loadMsgs: function() {
+    this.fetch({
+      data: {
+        order: "-createdAt"
       }
     });
-  },
-  model: Message
+  }
 });
 
-var messages = new Messages();
 
-messages.fetch();
+var FormView = Backbone.View.extend({
 
-setInterval(function () {
-  messages.fetch();
-}, 1000);
+  events: {
+    'click #send': 'handleSubmit'
+  },
+  handleSubmit: function(e){
+    e.preventDefault();
+
+    var $text = this.$('#message');
+    this.collection.create({
+      username: this.$('.name').val(),
+      text: $text.val()
+    });
+    $text.val('');
+  },
+
+});
+
+//TODO below here!
+//
+
+var MessageView = Backbone.View.extend({
+  template: _.template("<span class='username'><%- username %></span> : <span class='message'><%- text %></span>"),
+
+  render: function(){
+
+    this.$el.html(this.template(this.model.attributes));
+    return this.$el;
+  }
+});
+
+var MessagesView = Backbone.View.extend({
+  initialize: function(){
+    this.collection.on('sync', this.render, this);
+    this.onscreenMessages = {};
+  },
+
+  render: function(){
+    this.collection.forEach(this.renderMessage, this);
+  },
+
+  renderMessage: function(message){
+    if( !this.onscreenMessages[message.get('objectId')] ){
+      var messageView = new MessageView({model: message});
+      this.$el.prepend(messageView.render());
+      this.onscreenMessages[message.get('objectId')] = true;
+    }
+  }
+});
+
+// var messages = new Messages({model:Message});
+// messages.loadMsgs();
+// messages.fetch();
+
+// setInterval(function () {
+//   messages.fetch();
+// }, 1000);
+
+// var m = new Message('hello', 'world');
+// var v = new MessageView({ model: m});
+// m.set('message', 'foofoo');
+
+
 
 
 // var mostRecentMessage;
@@ -69,7 +97,7 @@ setInterval(function () {
 // var app = {
 //   server: 'https://api.parse.com/1/classes/chatterbox',
 //   init: function() {
- 
+
 
 
 //     $(document).on('ready', function () {
